@@ -1,0 +1,17 @@
+node_modules/
+.env
+npm-debug.log
+yarn-error.log
+.DS_Store
+.expo/
+dist/
+web-build/
+.idea/
+.vscode/
+*.jks
+*.keystore
+coverage/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
