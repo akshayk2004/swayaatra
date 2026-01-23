@@ -78,7 +78,10 @@ export const AuthProvider = ({ children }) => {
         } catch (e) {
             console.log('Login status check error', e);
         } finally {
-            setSplashLoading(false);
+            // Artificial delay to show splash animation
+            setTimeout(() => {
+                setSplashLoading(false);
+            }, 2000);
         }
     };
 

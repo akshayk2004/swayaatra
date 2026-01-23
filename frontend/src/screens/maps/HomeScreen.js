@@ -102,7 +102,7 @@ const HomeScreen = ({ navigation }) => {
     };
 
     const handleSearch = () => {
-        navigation.navigate('Rides', {
+        navigation.navigate('SearchResults', {
             source: fromLocation,
             destination: toLocation,
             date: date.toISOString(),
@@ -179,8 +179,8 @@ const HomeScreen = ({ navigation }) => {
                             onChangeText={setFromLocation}
                             placeholder="From"
                         />
-                        <TouchableOpacity style={styles.gpsButton} onPress={handleUseGPS}>
-                            <Text style={styles.gpsText}>Use GPS</Text>
+                        <TouchableOpacity style={styles.iconBtn} onPress={handleUseGPS}>
+                            <Ionicons name="locate" size={20} color="#2196F3" />
                         </TouchableOpacity>
                     </View>
 
@@ -192,16 +192,21 @@ const HomeScreen = ({ navigation }) => {
                     </View>
 
                     {/* To Input */}
-                    <TouchableOpacity onPress={() => setShowMapPicker(true)}>
-                        <View style={styles.inputRow}>
-                            <View style={[styles.iconCircle, { backgroundColor: '#FF5252' }]}>
-                                <Ionicons name="location-outline" size={16} color="#fff" />
-                            </View>
-                            <Text style={[styles.input, { lineHeight: 40, color: toLocation ? '#333' : '#ccc' }]}>
-                                {toLocation || "To: Where are you going?"}
-                            </Text>
+                    <View style={styles.inputRow}>
+                        <View style={[styles.iconCircle, { backgroundColor: '#FF5252' }]}>
+                            <Ionicons name="location-outline" size={16} color="#fff" />
                         </View>
-                    </TouchableOpacity>
+                        <TextInput
+                            style={styles.input}
+                            value={toLocation}
+                            onChangeText={setToLocation}
+                            placeholder="To: Where are you going?"
+                            placeholderTextColor="#ccc"
+                        />
+                        <TouchableOpacity onPress={() => setShowMapPicker(true)} style={styles.iconBtn}>
+                            <Ionicons name="map-outline" size={20} color="#666" />
+                        </TouchableOpacity>
+                    </View>
 
                     {/* Date & Seats Row */}
                     <View style={styles.splitRow}>
@@ -461,17 +466,9 @@ const styles = StyleSheet.create({
         color: '#333',
         height: 40,
     },
-    gpsButton: {
-        backgroundColor: '#E8F5E9',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 15,
-        marginRight: 5,
-    },
-    gpsText: {
-        color: '#2ECC71',
-        fontSize: 12,
-        fontWeight: 'bold',
+    iconBtn: {
+        padding: 5,
+        marginLeft: 5,
     },
     swapContainer: {
         alignItems: 'center',

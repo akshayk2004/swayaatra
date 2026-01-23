@@ -13,6 +13,14 @@ const userSchema = new mongoose.Schema({
     badges: [{ type: String }], // e.g., "Top Driver", "Reliable"
     ridesOffered: { type: Number, default: 0 },
     ridesTaken: { type: Number, default: 0 },
+    vehicles: [{
+        make: { type: String, required: true },
+        model: { type: String, required: true },
+        year: { type: String, required: true },
+        plate: { type: String, required: true },
+        color: { type: String, required: true },
+        type: { type: String, default: 'sedan' } // sedan, suv, hatchback
+    }]
 }, { timestamps: true });
 
 console.log('User Model Loaded');

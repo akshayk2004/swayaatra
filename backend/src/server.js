@@ -44,6 +44,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/users', require('./routes/userRoutes'));
 
 // Socket.io
 socketHandler(io);

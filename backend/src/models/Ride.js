@@ -18,7 +18,15 @@ const rideSchema = new mongoose.Schema({
     seatsAvailable: { type: Number, required: true },
     passengers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     status: { type: String, enum: ['scheduled', 'active', 'completed', 'cancelled'], default: 'scheduled' },
-    polyline: { type: String } // For mapping the route
+    polyline: { type: String },
+    vehicle: {
+        make: String,
+        model: String,
+        color: String,
+        plate: String,
+        year: String,
+        type: { type: String, default: 'sedan' }
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Ride', rideSchema);

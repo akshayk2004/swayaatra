@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Image, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -10,10 +10,13 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import HomeScreen from '../screens/maps/HomeScreen';
 import RidesScreen from '../screens/rides/RidesScreen';
+import SearchResultsScreen from '../screens/rides/SearchResultsScreen';
 import CreateRideScreen from '../screens/rides/CreateRideScreen';
 import RideDetailsScreen from '../screens/rides/RideDetailsScreen';
 import ChatScreen from '../screens/chat/ChatScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import MyVehiclesScreen from '../screens/profile/MyVehiclesScreen';
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 
 const Stack = createNativeStackNavigator();
@@ -53,8 +56,13 @@ const AppNavigator = () => {
 
     if (splashLoading) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#6C63FF" />
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000' }}>
+                <Image
+                    source={require('../../assets/logo.png')}
+                    style={{ width: 160, height: 160, marginBottom: 20, resizeMode: 'contain' }}
+                />
+                <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#00E5FF', marginBottom: 40, letterSpacing: 2 }}>Swayaatra</Text>
+                <ActivityIndicator size="large" color="#00E5FF" />
             </View>
         );
     }
@@ -65,9 +73,12 @@ const AppNavigator = () => {
                 {user ? (
                     <>
                         <Stack.Screen name="Main" component={TabNavigator} />
+                        <Stack.Screen name="SearchResults" component={SearchResultsScreen} options={{ headerShown: true, title: 'Search Results' }} />
                         <Stack.Screen name="CreateRide" component={CreateRideScreen} options={{ headerShown: true, title: 'Offer a Ride' }} />
                         <Stack.Screen name="RideDetails" component={RideDetailsScreen} options={{ headerShown: true, title: 'Ride Details', headerBackTitle: 'Back' }} />
                         <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: true, title: 'Chat' }} />
+                        <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: true, title: 'Edit Profile' }} />
+                        <Stack.Screen name="MyVehicles" component={MyVehiclesScreen} options={{ headerShown: true, title: 'My Vehicles' }} />
                         <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications' }} />
                     </>
                 ) : (

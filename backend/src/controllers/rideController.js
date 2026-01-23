@@ -6,7 +6,7 @@ const RideRequest = require('../models/RideRequest');
 // @access  Private (Driver)
 const createRide = async (req, res) => {
     try {
-        const { source, destination, date, fare, seats, polyline } = req.body;
+        const { source, destination, date, fare, seats, polyline, vehicle } = req.body;
 
         const ride = await Ride.create({
             driver: req.user._id,
@@ -16,7 +16,8 @@ const createRide = async (req, res) => {
             fare,
             seats,
             seatsAvailable: seats,
-            polyline
+            polyline,
+            vehicle
         });
 
         res.status(201).json(ride);
@@ -29,14 +30,40 @@ const createRide = async (req, res) => {
 // @route   GET /api/rides/search
 // @access  Public
 const searchRides = async (req, res) => {
-    // Simple search (can be enhanced with Geospatial queries later)
-    // For now, return all scheduled rides
     try {
-        const rides = await Ride.find({ status: 'scheduled' })
+        const { source, destination, date, seats } = req.query;
+        let query = { status: 'scheduled' };
+
+        if (source && source !== 'Current location' && source !== 'Unknown Location') {
+            query['source.name'] = { $regex: source, $options: 'i' };
+        }
+
+        if (destination) {
+            query['destination.name'] = { $regex: destination, $options: 'i' };
+        }
+
+        if (date) {
+            const searchDate = new Date(date);
+            const nextDay = new Date(searchDate);
+            nextDay.setDate(searchDate.getDate() + 1);
+
+            query.date = {
+                $gte: searchDate.toISOString(),
+                $lt: nextDay.toISOString()
+            };
+        }
+
+        if (seats) {
+            query.seatsAvailable = { $gte: Number(seats) };
+        }
+
+        const rides = await Ride.find(query)
             .populate('driver', 'name rating profileImage')
             .sort({ date: 1 });
+
         res.json(rides);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -204,4 +231,80 @@ const getRideDetails = async (req, res) => {
     }
 };
 
-module.exports = { createRide, searchRides, joinRide, getRideDetails, acceptRequest, rejectRequest, getPendingRequests };
+// @desc    Get Current User's Rides (as driver or passenger)
+// @route   GET /api/rides/my-rides
+// @access  Private
+const getMyRides = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const now = new Date();
+
+        // Find rides where user is driver OR passenger
+        const rides = await Ride.find({
+            $or: [
+                { driver: userId },
+                { passengers: userId }
+            ]
+        })
+            .populate('driver', 'name rating profileImage')
+            .sort({ date: -1 }); // Sort by latest first
+
+        const upcoming = [];
+        const past = [];
+
+        rides.forEach(ride => {
+            const rideDate = new Date(ride.date);
+            // Add user specific role to the ride object for frontend
+            const rideObj = ride.toObject();
+            rideObj.userRole = (ride.driver._id.toString() === userId.toString()) ? 'driver' : 'passenger';
+
+            if (rideDate >= now && ride.status !== 'completed' && ride.status !== 'cancelled') {
+                upcoming.unshift(rideObj); // Put closest upcoming dates first (since we sorted desc)
+                // Wait, if sort is desc (newest first), upcoming rides in the future will be first.
+                // Actually with date: -1, Future dates (bigger) are first.
+                // So upcoming list is [Far Future, Near Future].
+                // We probably want [Near Future, Far Future]. 
+                // Let's just sort the final arrays again to be safe.
+            } else {
+                past.push(rideObj);
+            }
+        });
+
+        // Sort upcoming: Closest date first (Ascending)
+        upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Sort past: Most recent date first (Descending)
+        past.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        res.json({ upcoming, past });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Complete a Ride
+// @route   POST /api/rides/:id/complete
+// @access  Private (Driver)
+const completeRide = async (req, res) => {
+    try {
+        const ride = await Ride.findById(req.params.id);
+
+        if (!ride) {
+            return res.status(404).json({ message: 'Ride not found' });
+        }
+
+        if (ride.driver.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
+        ride.status = 'completed';
+        await ride.save();
+
+        res.json({ message: 'Ride completed successfully', ride });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+module.exports = { createRide, searchRides, joinRide, getRideDetails, acceptRequest, rejectRequest, getPendingRequests, getMyRides, completeRide };
