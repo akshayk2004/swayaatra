@@ -16,7 +16,7 @@ const socketHandler = (io) => {
 
         // Chat message (real-time propagation)
         socket.on('chatMessage', ({ rideId, message, user }) => {
-            io.to(rideId).emit('chatMessage', { message, user, createdAt: new Date() });
+            io.to(rideId).emit('chatMessage', { rideId, message, user, createdAt: new Date() });
         });
 
         // Request update (e.g., Passenger requests to join)
@@ -24,6 +24,18 @@ const socketHandler = (io) => {
             // Notify specific driver
             // Note: In real app, we need to map userId to socketId or join a personal room
             io.emit(`rideRequest:${driverId}`, request);
+        });
+
+        // Simulated Live Ride Request from Rider -> Broadcast to all drivers
+        socket.on('liveRideRequest', (data) => {
+            console.log('Broadcasting liveRideRequest:', data.passengerName);
+            io.emit('liveRideRequest', data);
+        });
+
+        // Live Ride Response from Driver -> Relay to Rider
+        socket.on('liveRideResponse', (data) => {
+            console.log('Broadcasting liveRideResponse for passenger:', data.passengerId, 'accepted:', data.accepted);
+            io.emit('liveRideResponse', data);
         });
 
         // Ride Status Update (Accepted, Started, Completed)

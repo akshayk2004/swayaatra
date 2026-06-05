@@ -13,6 +13,19 @@ const userSchema = new mongoose.Schema({
     badges: [{ type: String }], // e.g., "Top Driver", "Reliable"
     ridesOffered: { type: Number, default: 0 },
     ridesTaken: { type: Number, default: 0 },
+    driverDetails: {
+        licenseNumber: { type: String },
+        aadharNumber: { type: String },
+        carModel: { type: String },
+        numberPlate: { type: String },
+        pucCertificate: { type: String },
+        rcNumber: { type: String },
+        insurancePolicy: { type: String },
+    },
+    emergencyContact: {
+        phone: { type: String },
+        email: { type: String },
+    },
     vehicles: [{
         make: { type: String, required: true },
         model: { type: String, required: true },

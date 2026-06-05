@@ -11,16 +11,60 @@ const RegisterScreen = ({ navigation }) => {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('passenger'); // Default role
+    
+    // Driver-specific fields
+    const [licenseNumber, setLicenseNumber] = useState('');
+    const [aadharNumber, setAadharNumber] = useState('');
+    const [carModel, setCarModel] = useState('');
+    const [numberPlate, setNumberPlate] = useState('');
+    const [pucCertificate, setPucCertificate] = useState('');
+    const [rcNumber, setRcNumber] = useState('');
+    const [insurancePolicy, setInsurancePolicy] = useState('');
+
+    // Passenger-specific fields
+    const [emergencyEmail, setEmergencyEmail] = useState('');
+    const [emergencyPhone, setEmergencyPhone] = useState('');
     const { register, isLoading } = useContext(AuthContext);
 
     const handleRegister = async () => {
         if (!name || !email || !phone || !password) {
-            Alert.alert('Error', 'Please fill in all fields');
+            Alert.alert('Error', 'Please fill in all basic fields');
             return;
         }
 
+        let driverDetails = null;
+
+        if (role === 'driver') {
+            if (!licenseNumber || !aadharNumber || !carModel || !numberPlate || !pucCertificate || !rcNumber || !insurancePolicy) {
+                Alert.alert('Error', 'Please fill in all mandatory driver details');
+                return;
+            }
+            driverDetails = {
+                licenseNumber,
+                aadharNumber,
+                carModel,
+                numberPlate,
+                pucCertificate,
+                rcNumber,
+                insurancePolicy
+            };
+        }
+
+        let emergencyContact = null;
+
+        if (role === 'passenger') {
+            if (!emergencyEmail || !emergencyPhone) {
+                Alert.alert('Error', 'Please fill in all emergency contact details for your security');
+                return;
+            }
+            emergencyContact = {
+                email: emergencyEmail,
+                phone: emergencyPhone
+            };
+        }
+
         try {
-            await register(name, email, phone, password, role);
+            await register(name, email, phone, password, role, driverDetails, emergencyContact);
         } catch (error) {
             Alert.alert('Error', error.response?.data?.message || 'Something went wrong');
         }
@@ -83,6 +127,27 @@ const RegisterScreen = ({ navigation }) => {
                         </TouchableOpacity>
                     </View>
 
+                    {role === 'passenger' && (
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Emergency Contact (For Security)</Text>
+                            <Input placeholder="Emergency Email" icon="mail-outline" value={emergencyEmail} onChangeText={setEmergencyEmail} keyboardType="email-address" />
+                            <Input placeholder="Emergency Phone Number" icon="call-outline" value={emergencyPhone} onChangeText={setEmergencyPhone} keyboardType="phone-pad" />
+                        </View>
+                    )}
+
+                    {role === 'driver' && (
+                        <View style={styles.driverSection}>
+                            <Text style={styles.sectionTitle}>Driver Details</Text>
+                            <Input placeholder="Driver License Number" icon="card-outline" value={licenseNumber} onChangeText={setLicenseNumber} />
+                            <Input placeholder="Aadhar Number" icon="id-card-outline" value={aadharNumber} onChangeText={setAadharNumber} keyboardType="numeric" />
+                            <Input placeholder="Car Model (e.g. Swift Dzire)" icon="car-outline" value={carModel} onChangeText={setCarModel} />
+                            <Input placeholder="Number Plate (e.g. MH12AB1234)" icon="apps-outline" value={numberPlate} onChangeText={setNumberPlate} />
+                            <Input placeholder="PUC Certificate Number" icon="leaf-outline" value={pucCertificate} onChangeText={setPucCertificate} />
+                            <Input placeholder="RC Number" icon="document-text-outline" value={rcNumber} onChangeText={setRcNumber} />
+                            <Input placeholder="Car Insurance Policy" icon="shield-checkmark-outline" value={insurancePolicy} onChangeText={setInsurancePolicy} />
+                        </View>
+                    )}
+
                     <Button
                         title={isLoading ? "Creating Account..." : "Sign Up"}
                         onPress={handleRegister}
@@ -100,7 +165,7 @@ const RegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#FAFAFA',
     },
     scrollContent: {
         flexGrow: 1,
@@ -139,8 +204,8 @@ const styles = StyleSheet.create({
         borderColor: '#ddd',
     },
     roleButtonActive: {
-        backgroundColor: '#6C63FF',
-        borderColor: '#6C63FF',
+        backgroundColor: '#005BEA',
+        borderColor: '#005BEA',
     },
     roleText: {
         color: '#666',
@@ -152,9 +217,32 @@ const styles = StyleSheet.create({
     },
     link: {
         marginTop: 20,
-        color: '#6C63FF',
+        color: '#005BEA',
         fontSize: 16,
         fontWeight: '500',
+    },
+    section: {
+        width: '100%',
+        marginTop: 10,
+        marginBottom: 10,
+        paddingTop: 20,
+        borderTopWidth: 1,
+        borderColor: '#eee',
+    },
+    driverSection: {
+        width: '100%',
+        marginTop: 10,
+        marginBottom: 10,
+        paddingTop: 20,
+        borderTopWidth: 1,
+        borderColor: '#eee',
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 15,
+        alignSelf: 'flex-start',
     },
 });
 

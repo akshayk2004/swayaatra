@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [splashLoading, setSplashLoading] = useState(true);
 
-    const register = async (name, email, phone, password, role) => {
+    const register = async (name, email, phone, password, role, driverDetails = null, emergencyContact = null) => {
         setIsLoading(true);
         try {
             const response = await api.post('/auth/register', {
@@ -17,7 +17,9 @@ export const AuthProvider = ({ children }) => {
                 email,
                 phone,
                 password,
-                role
+                role,
+                driverDetails,
+                emergencyContact
             });
             const userInfo = response.data;
             setUser(userInfo);
@@ -87,6 +89,20 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         checkLoginStatus();
+
+        const interceptor = api.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response && error.response.status === 401) {
+                    logout();
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        return () => {
+            api.interceptors.response.eject(interceptor);
+        };
     }, []);
 
     return (

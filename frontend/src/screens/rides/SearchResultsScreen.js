@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
 const SearchResultsScreen = ({ navigation, route }) => {
-    const { source, destination, date, seats } = route.params || {};
+    const { source, destination, date, seats, sourceLat, sourceLng, destLat, destLng } = route.params || {};
     const [rides, setRides] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -19,6 +19,10 @@ const SearchResultsScreen = ({ navigation, route }) => {
             if (destination) params.destination = destination;
             if (date) params.date = date;
             if (seats) params.seats = seats;
+            if (sourceLat !== undefined && sourceLat !== null) params.sourceLat = sourceLat;
+            if (sourceLng !== undefined && sourceLng !== null) params.sourceLng = sourceLng;
+            if (destLat !== undefined && destLat !== null) params.destLat = destLat;
+            if (destLng !== undefined && destLng !== null) params.destLng = destLng;
 
             const response = await api.get('/rides/search', { params });
             setRides(response.data);
@@ -32,7 +36,7 @@ const SearchResultsScreen = ({ navigation, route }) => {
 
     useEffect(() => {
         fetchRides();
-    }, [source, destination, date, seats]);
+    }, [source, destination, date, seats, sourceLat, sourceLng, destLat, destLng]);
 
     const onRefresh = () => {
         setRefreshing(true);

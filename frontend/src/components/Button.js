@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
-const Button = ({ title, onPress, colors = ['#6C63FF', '#4ca1af'] }) => {
+const Button = ({ title, onPress, colors = ['#00C6FB', '#005BEA'] }) => {
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
             <LinearGradient

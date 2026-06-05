@@ -40,10 +40,6 @@ const RideCard = ({ ride, onPress }) => {
                     <Text style={styles.infoText}>{new Date(ride.date).toLocaleDateString()}</Text>
                 </View>
                 <View style={styles.infoItem}>
-                    <Ionicons name="time-outline" size={16} color="#666" />
-                    <Text style={styles.infoText}>{new Date(ride.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-                </View>
-                <View style={styles.infoItem}>
                     <Ionicons name="people-outline" size={16} color="#666" />
                     <Text style={styles.infoText}>{ride.seatsAvailable} seats left</Text>
                 </View>

@@ -14,6 +14,7 @@ import SearchResultsScreen from '../screens/rides/SearchResultsScreen';
 import CreateRideScreen from '../screens/rides/CreateRideScreen';
 import RideDetailsScreen from '../screens/rides/RideDetailsScreen';
 import ChatScreen from '../screens/chat/ChatScreen';
+import ChatListScreen from '../screens/chat/ChatListScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import MyVehiclesScreen from '../screens/profile/MyVehiclesScreen';
@@ -33,6 +34,8 @@ const TabNavigator = () => {
                         iconName = focused ? 'map' : 'map-outline';
                     } else if (route.name === 'Rides') {
                         iconName = focused ? 'car' : 'car-outline';
+                    } else if (route.name === 'Chats') {
+                        iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
                     } else if (route.name === 'Profile') {
                         iconName = focused ? 'person' : 'person-outline';
                     }
@@ -46,6 +49,7 @@ const TabNavigator = () => {
         >
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="Rides" component={RidesScreen} />
+            <Tab.Screen name="Chats" component={ChatListScreen} />
             <Tab.Screen name="Profile" component={ProfileScreen} />
         </Tab.Navigator>
     );

@@ -66,7 +66,7 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#FAFAFA',
         justifyContent: 'center',
         paddingHorizontal: 20,
     },
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     },
     link: {
         marginTop: 20,
-        color: '#6C63FF',
+        color: '#005BEA',
         fontSize: 16,
         fontWeight: '500',
     },

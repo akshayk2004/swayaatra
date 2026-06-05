@@ -31,16 +31,8 @@ const createRide = async (req, res) => {
 // @access  Public
 const searchRides = async (req, res) => {
     try {
-        const { source, destination, date, seats } = req.query;
+        const { source, destination, date, seats, sourceLat, sourceLng, destLat, destLng } = req.query;
         let query = { status: 'scheduled' };
-
-        if (source && source !== 'Current location' && source !== 'Unknown Location') {
-            query['source.name'] = { $regex: source, $options: 'i' };
-        }
-
-        if (destination) {
-            query['destination.name'] = { $regex: destination, $options: 'i' };
-        }
 
         if (date) {
             const searchDate = new Date(date);
@@ -57,11 +49,101 @@ const searchRides = async (req, res) => {
             query.seatsAvailable = { $gte: Number(seats) };
         }
 
+        // Fetch all candidate rides matching date and seats
         const rides = await Ride.find(query)
             .populate('driver', 'name rating profileImage')
             .sort({ date: 1 });
 
-        res.json(rides);
+        // Parse search coordinates
+        const sLat = parseFloat(sourceLat);
+        const sLng = parseFloat(sourceLng);
+        const dLat = parseFloat(destLat);
+        const dLng = parseFloat(destLng);
+
+        const hasCoords = !isNaN(sLat) && !isNaN(sLng) && !isNaN(dLat) && !isNaN(dLng);
+
+        if (hasCoords) {
+            const getDistance = (lat1, lon1, lat2, lon2) => {
+                const R = 6371; // Radius of the earth in km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a =
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c;
+            };
+
+            const matchedRides = rides.filter(ride => {
+                // If ride has no polyline, fallback to string matching
+                if (!ride.polyline) {
+                    const sMatch = !source || ride.source.name.toLowerCase().includes(source.toLowerCase());
+                    const dMatch = !destination || ride.destination.name.toLowerCase().includes(destination.toLowerCase());
+                    return sMatch && dMatch;
+                }
+
+                try {
+                    const points = JSON.parse(ride.polyline);
+                    if (!Array.isArray(points) || points.length === 0) {
+                        return false;
+                    }
+
+                    // Find closest point to source
+                    let minSourceDist = Infinity;
+                    let sourceIdx = -1;
+                    for (let k = 0; k < points.length; k++) {
+                        const pt = points[k];
+                        const dist = getDistance(sLat, sLng, pt.latitude, pt.longitude);
+                        if (dist < minSourceDist) {
+                            minSourceDist = dist;
+                            sourceIdx = k;
+                        }
+                    }
+
+                    // Find closest point to destination
+                    let minDestDist = Infinity;
+                    let destIdx = -1;
+                    for (let k = 0; k < points.length; k++) {
+                        const pt = points[k];
+                        const dist = getDistance(dLat, dLng, pt.latitude, pt.longitude);
+                        if (dist < minDestDist) {
+                            minDestDist = dist;
+                            destIdx = k;
+                        }
+                    }
+
+                    // Matching threshold of 1.5 km
+                    const MATCH_THRESHOLD = 1.5;
+                    const sourceMatches = minSourceDist <= MATCH_THRESHOLD;
+                    const destMatches = minDestDist <= MATCH_THRESHOLD;
+
+                    // Source must appear before destination in driver's route
+                    return sourceMatches && destMatches && sourceIdx < destIdx;
+                } catch (err) {
+                    // Fallback to name search on JSON parse error
+                    const sMatch = !source || ride.source.name.toLowerCase().includes(source.toLowerCase());
+                    const dMatch = !destination || ride.destination.name.toLowerCase().includes(destination.toLowerCase());
+                    return sMatch && dMatch;
+                }
+            });
+
+            return res.json(matchedRides);
+        }
+
+        // Fallback to text matching if no search coordinates were provided
+        const filteredRides = rides.filter(ride => {
+            let matches = true;
+            if (source && source !== 'Current location' && source !== 'Unknown Location') {
+                matches = matches && ride.source.name.toLowerCase().includes(source.toLowerCase());
+            }
+            if (destination) {
+                matches = matches && ride.destination.name.toLowerCase().includes(destination.toLowerCase());
+            }
+            return matches;
+        });
+
+        res.json(filteredRides);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });

@@ -11,7 +11,7 @@ const generateToken = (id) => {
 // @access  Public
 const registerUser = async (req, res) => {
     try {
-        const { name, email, phone, password, role } = req.body;
+        const { name, email, phone, password, role, driverDetails, emergencyContact } = req.body;
         console.log('Register Request Body:', req.body);
 
         // Check if user exists
@@ -26,7 +26,9 @@ const registerUser = async (req, res) => {
             email,
             phone,
             password,
-            role
+            role,
+            driverDetails,
+            emergencyContact
         });
 
         if (user) { // Immediately login after register (or send OTP in real scenario)

@@ -9,10 +9,39 @@ import * as Location from 'expo-location';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { AuthContext } from '../../context/AuthContext';
 
+const MAPUSA_PANJIM_COORDS = [
+    { latitude: 15.5937, longitude: 73.8105 }, // Mapusa
+    { latitude: 15.5800, longitude: 73.8130 },
+    { latitude: 15.5650, longitude: 73.8150 },
+    { latitude: 15.5453, longitude: 73.8180 }, // Porvorim
+    { latitude: 15.5250, longitude: 73.8210 },
+    { latitude: 15.5100, longitude: 73.8240 },
+    { latitude: 15.4989, longitude: 73.8278 }  // Panjim
+];
+
+const MAPUSA_CALANGUTE_COORDS = [
+    { latitude: 15.5937, longitude: 73.8105 }, // Mapusa
+    { latitude: 15.5820, longitude: 73.7980 },
+    { latitude: 15.5710, longitude: 73.7850 },
+    { latitude: 15.5612, longitude: 73.7741 }, // Saligao
+    { latitude: 15.5500, longitude: 73.7680 },
+    { latitude: 15.5399, longitude: 73.7628 }  // Calangute
+];
+
+const PANJIM_CALANGUTE_COORDS = [
+    { latitude: 15.4989, longitude: 73.8278 }, // Panjim
+    { latitude: 15.5080, longitude: 73.8120 },
+    { latitude: 15.5183, longitude: 73.7915 }, // Reis Magos
+    { latitude: 15.5280, longitude: 73.7750 },
+    { latitude: 15.5399, longitude: 73.7628 }  // Calangute
+];
+
 const CreateRideScreen = ({ navigation }) => {
     const { user } = useContext(AuthContext);
     const [source, setSource] = useState('');
     const [destination, setDestination] = useState('');
+    const [sourceCoords, setSourceCoords] = useState(null);
+    const [destCoords, setDestCoords] = useState(null);
     const [date, setDate] = useState(new Date());
     const [time, setTime] = useState(new Date());
     const [fare, setFare] = useState('');
@@ -92,13 +121,58 @@ const CreateRideScreen = ({ navigation }) => {
             rideDateTime.setHours(time.getHours());
             rideDateTime.setMinutes(time.getMinutes());
 
+            // Determine active coordinates / polyline list
+            let sCoords = sourceCoords || { latitude: 15.4989, longitude: 73.8278 };
+            let dCoords = destCoords || { latitude: 15.5937, longitude: 73.8105 };
+            let routeCoords = [];
+
+            const sName = source.toLowerCase();
+            const dName = destination.toLowerCase();
+
+            if (sName.includes('mapusa') && dName.includes('panjim')) {
+                routeCoords = MAPUSA_PANJIM_COORDS;
+                sCoords = MAPUSA_PANJIM_COORDS[0];
+                dCoords = MAPUSA_PANJIM_COORDS[MAPUSA_PANJIM_COORDS.length - 1];
+            } else if (sName.includes('panjim') && dName.includes('mapusa')) {
+                routeCoords = [...MAPUSA_PANJIM_COORDS].reverse();
+                sCoords = routeCoords[0];
+                dCoords = routeCoords[routeCoords.length - 1];
+            } else if (sName.includes('mapusa') && dName.includes('calangute')) {
+                routeCoords = MAPUSA_CALANGUTE_COORDS;
+                sCoords = MAPUSA_CALANGUTE_COORDS[0];
+                dCoords = MAPUSA_CALANGUTE_COORDS[MAPUSA_CALANGUTE_COORDS.length - 1];
+            } else if (sName.includes('calangute') && dName.includes('mapusa')) {
+                routeCoords = [...MAPUSA_CALANGUTE_COORDS].reverse();
+                sCoords = routeCoords[0];
+                dCoords = routeCoords[routeCoords.length - 1];
+            } else if (sName.includes('panjim') && dName.includes('calangute')) {
+                routeCoords = PANJIM_CALANGUTE_COORDS;
+                sCoords = PANJIM_CALANGUTE_COORDS[0];
+                dCoords = PANJIM_CALANGUTE_COORDS[PANJIM_CALANGUTE_COORDS.length - 1];
+            } else if (sName.includes('calangute') && dName.includes('panjim')) {
+                routeCoords = [...PANJIM_CALANGUTE_COORDS].reverse();
+                sCoords = routeCoords[0];
+                dCoords = routeCoords[routeCoords.length - 1];
+            } else {
+                // Interpolate 10 points between sCoords and dCoords to form a straight line path
+                const steps = 10;
+                for (let i = 0; i <= steps; i++) {
+                    const factor = i / steps;
+                    routeCoords.push({
+                        latitude: sCoords.latitude + (dCoords.latitude - sCoords.latitude) * factor,
+                        longitude: sCoords.longitude + (dCoords.longitude - sCoords.longitude) * factor
+                    });
+                }
+            }
+
             const rideData = {
-                source: { name: source, lat: 37.7749, lng: -122.4194 },
-                destination: { name: destination, lat: 34.0522, lng: -118.2437 },
+                source: { name: source, lat: sCoords.latitude, lng: sCoords.longitude },
+                destination: { name: destination, lat: dCoords.latitude, lng: dCoords.longitude },
                 date: rideDateTime.toISOString(),
                 fare: Number(fare),
                 seats: Number(seats),
-                vehicle: selectedVehicle // Pass selected vehicle
+                polyline: JSON.stringify(routeCoords),
+                vehicle: selectedVehicle
             };
 
             await api.post('/rides/create', rideData);
@@ -132,8 +206,10 @@ const CreateRideScreen = ({ navigation }) => {
                 const addr = reverseGeocode[0];
                 const addressString = `${addr.street || ''} ${addr.name || ''}, ${addr.city}`;
                 setSource(addressString.trim());
+                setSourceCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
             } else {
                 setSource('Unknown Location');
+                setSourceCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
             }
         } catch (error) {
             console.error(error);
@@ -159,8 +235,10 @@ const CreateRideScreen = ({ navigation }) => {
 
                 if (pickerMode === 'source') {
                     setSource(addressString.trim());
+                    setSourceCoords(pickedLocation);
                 } else {
                     setDestination(addressString.trim());
+                    setDestCoords(pickedLocation);
                 }
             } catch (error) {
                 console.error(error);

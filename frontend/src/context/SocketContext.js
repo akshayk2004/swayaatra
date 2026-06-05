@@ -2,8 +2,10 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import io from 'socket.io-client';
 import { AuthContext } from './AuthContext';
 
+import { getLocalIP } from '../../getIP';
+
 // Android Emulator: 10.0.2.2
-const SOCKET_URL = 'http://172.17.127.94:5000';
+const SOCKET_URL = `http://${getLocalIP()}:5000`;
 
 export const SocketContext = createContext();
 
